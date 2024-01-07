@@ -3,12 +3,14 @@ package com.xihua.easyctlserver.domain;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
-public class TerminalControlReq {
-    private String targetTopic;
+public class TopicApiRegisterReq {
+    private String topic;
 
     private String api;
 
-    private String params;
+    private List<String> params;
 }

@@ -1,35 +1,73 @@
 package com.xihua.easyctlserver.controller;
 
-import com.alibaba.fastjson.JSON;
-import com.xihua.easyctlserver.domain.LoginReq;
+import com.xihua.easyctlserver.annotations.UserAuth;
+import com.xihua.easyctlserver.dao.model.Topic;
+import com.xihua.easyctlserver.dao.model.TopicApi;
+import com.xihua.easyctlserver.dao.model.User;
 import com.xihua.easyctlserver.domain.Response;
-import com.xihua.easyctlserver.domain.TerminalControlReq;
+import com.xihua.easyctlserver.domain.TerminalCmdReq;
+import com.xihua.easyctlserver.service.TopicApiService;
+import com.xihua.easyctlserver.service.TopicService;
 import com.xihua.easymqtt.MClient;
+import com.xihua.easymqtt.domain.Message;
+import com.xihua.easymqtt.exceptions.MWaitResonseException;
 import com.xihua.easymqtt.exceptions.MqttServerConnectException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.Objects;
 
+@UserAuth(paramsWithUser = true)
 @RestController
-@RequestMapping("/terminal")
+@RequestMapping("/terminal/")
 public class TerminalController {
+    @Autowired
+    private TopicService topicService;
 
-    private final Logger logger = LoggerFactory.getLogger(TerminalController.class);
+    @Autowired
+    private TopicApiService topicApiService;
 
     @Value("easymqtt.brokerHost")
     private String brokerHost;
 
+    @Value("easymqtt.brokerHost")
+    private String mqttAccount;
+
+    @Value("easymqtt.brokerHost")
+    private String mqttPassword;
+
     private static final String persistenceDir = Objects.requireNonNull(TerminalController.class.getResource("")).getPath();
 
-    @PostMapping(value = "control")
-    public Response.ResponseBuilder<Void> control(@RequestParam TerminalControlReq req) {
-        logger.info(JSON.toJSONString(req));
-        return Response.<Void>builder().success(true);
+    private final Logger logger = LoggerFactory.getLogger(TerminalController.class);
+
+    @PostMapping(value = "call")
+    public Response.ResponseBuilder<Message> call(User user, @RequestBody TerminalCmdReq req) {
+        Topic tTopic = topicService.getTopicByUIdTopic(user.getId(), req.getTopic());
+        Topic uTopic = topicService.getUserTopicByUId(user.getId());
+        TopicApi tTopicApi = topicApiService.getByTidApiParams(tTopic.getId(), req.getApi(), req.getParams());
+        if (tTopicApi == null) {
+            return Response.<Message>builder().success(false).errMsg(
+                    "topic " + req.getTopic() + " has no api named " + req.getApi());
+        }
+
+        MClient client;
+        try {
+            client = new MClient(brokerHost, uTopic.getTopic(), mqttAccount, mqttPassword, persistenceDir);
+        } catch (MqttServerConnectException e) {
+            logger.error("init client error: ", e);
+            return Response.<Message>builder().success(false).errMsg("init client error: " + e.getMessage());
+        }
+        try {
+            return Response.<Message>builder().success(true).data(
+                    client.call(tTopic.getTopic(), tTopicApi.getApi(),
+                            Arrays.asList(tTopicApi.getParams().split(","))));
+        } catch (MWaitResonseException e) {
+            logger.error("call terminal error: ", e);
+            return Response.<Message>builder().success(false).errMsg("call terminal error: " + e.getMessage());
+        }
     }
 }

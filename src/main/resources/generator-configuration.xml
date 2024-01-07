@@ -12,15 +12,15 @@
 
         <!--数据库链接地址账号密码-->
         <jdbcConnection driverClass="com.mysql.cj.jdbc.Driver"
-                        connectionURL="jdbc:mysql://127.0.0.1:3306/easyctl?characterEncoding=utf8"
+                        connectionURL="jdbc:mysql://192.168.1.7:3306/easyctl?characterEncoding=utf8"
                         userId="root"
                         password="1865018650">
             <property name="nullCatalogMeansCurrent" value="true"/>
         </jdbcConnection>
 
-        <javaTypeResolver>
-            <property name="forceBigDecimals" value="false"/>
-        </javaTypeResolver>
+<!--        <javaTypeResolver>-->
+<!--            <property name="forceBigDecimals" value="false"/>-->
+<!--        </javaTypeResolver>-->
 
         <javaModelGenerator targetPackage="com.xihua.easyctlserver.dao.model"
                             targetProject="src/main/java">
@@ -41,6 +41,7 @@
         <table tableName="topic" domainObjectName="Topic"/>
         <table tableName="topic_api" domainObjectName="TopicApi"/>
         <table tableName="user" domainObjectName="User"/>
+        <table tableName="user_auth" domainObjectName="UserAuth"/>
         <table tableName="user_topic_relation" domainObjectName="UserTopicRelation"/>
     </context>
 </generatorConfiguration>
