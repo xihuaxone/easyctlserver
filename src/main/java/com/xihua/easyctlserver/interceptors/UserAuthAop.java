@@ -3,8 +3,7 @@ package com.xihua.easyctlserver.interceptors;
 import com.auth0.jwt.interfaces.Claim;
 import com.xihua.easyctlserver.annotations.UserAuth;
 import com.xihua.easyctlserver.dao.model.User;
-import com.xihua.easyctlserver.exception.AuthFailException;
-import com.xihua.easyctlserver.exception.UserNotExistsException;
+import com.xihua.easyctlserver.exception.UserAuthAopException;
 import com.xihua.easyctlserver.service.UserService;
 import com.xihua.easyctlserver.utils.JWTUtil;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -47,7 +46,6 @@ public class UserAuthAop {
         Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
         User user = null;
 
-        Object[] newArgs = new Object[args.length + 1];
         UserAuth annotation = method.getAnnotation(UserAuth.class);
         if (annotation == null) {
             annotation = method.getDeclaringClass().getAnnotation(UserAuth.class);
@@ -62,8 +60,11 @@ public class UserAuthAop {
         return joinPoint.proceed(args);
     }
 
-    public User verify(HttpServletRequest request) throws Exception {
+    public User verify(HttpServletRequest request) {
         String token = null;
+        if (request.getCookies() == null) {
+            throw new UserAuthAopException("user not login.");
+        }
         for (Cookie c : request.getCookies()) {
             if (c.getName().equals("TOKEN")) {
                 token = c.getValue();
@@ -71,21 +72,26 @@ public class UserAuthAop {
             }
         }
         if (StringUtils.isBlank(token)) {
-            throw new AuthFailException();
+            throw new UserAuthAopException("user not login.");
         }
 
         try {
             JWTUtil.verify(token, secret);
         } catch (Throwable e) {
-            throw new AuthFailException(e);
+            throw new UserAuthAopException(e);
         }
 
-        Map<String, Claim> tokenInfo = JWTUtil.getTokenInfo(token, secret);
-        Claim uid = tokenInfo.get("uid");
+        Long uid;
+        try {
+            Map<String, Claim> tokenInfo = JWTUtil.getTokenInfo(token, secret);
+            uid = Long.valueOf(tokenInfo.get("uid").asString());
+        } catch (Throwable e) {
+            throw new UserAuthAopException(e);
+        }
 
-        User user = userService.get(Long.valueOf(uid.asString()));
+        User user = userService.get(uid);
         if (user == null) {
-            throw new UserNotExistsException("user " + uid.asLong() + " not exists.");
+            throw new UserAuthAopException("user " + uid + " not exists.");
         }
         return user;
     }

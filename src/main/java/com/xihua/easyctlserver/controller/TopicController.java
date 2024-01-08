@@ -34,13 +34,13 @@ public class TopicController {
     private final Logger logger = LoggerFactory.getLogger(TopicController.class);
 
     @PostMapping(value = "list")
-    public Response.ResponseBuilder<List<Topic>> list(User user) {
+    public Response<List<Topic>> list(User user) {
         List<Topic> terminalTopicList = topicService.getTTopicsByUId(user.getId());
-        return Response.<List<Topic>>builder().success(true).data(terminalTopicList);
+        return new Response<>(true, terminalTopicList);
     }
 
     @PostMapping(value = "register")
-    public Response.ResponseBuilder<Void> control(User user, @RequestBody TopicRegisterReq req) {
+    public Response<Void> control(User user, @RequestBody TopicRegisterReq req) {
         Topic uTopic = new Topic();
         uTopic.setTopic(req.getUTopic());
         Topic tTopic = new Topic();
@@ -48,40 +48,40 @@ public class TopicController {
         try {
             topicService.add(user.getId(), uTopic, Collections.singletonList(tTopic));
         } catch (TopicExistsException e) {
-            return Response.<Void>builder().success(false).errMsg("topic exists.");
+            return new Response<>(false, "topic exists.");
         }
-        return Response.<Void>builder().success(true);
+        return new Response<>(true);
     }
 
     @PostMapping(value = "update")
-    public Response.ResponseBuilder<Void> update(User user, @RequestBody TopicUpdateReq req) {
+    public Response<Void> update(User user, @RequestBody TopicUpdateReq req) {
         Topic oldTopic = topicService.getTopicByUIdTopic(user.getId(), req.getTopic());
         try {
             topicService.update(oldTopic.getId(), req.getStatus());
         } catch (TopicNotExistsException e) {
-            return Response.<Void>builder().success(false).errMsg("topic " + req.getTopic() + " not exists.");
+            return new Response<>(false, "topic " + req.getTopic() + " not exists.");
         }
-        return Response.<Void>builder().success(true);
+        return new Response<>(true);
     }
 
     @PostMapping(value = "delete")
-    public Response.ResponseBuilder<Void> delete(User user, @RequestBody String topic) {
+    public Response<Void> delete(User user, @RequestBody String topic) {
         Topic oldTopic = topicService.getTopicByUIdTopic(user.getId(), topic);
         topicService.delete(oldTopic.getId());
-        return Response.<Void>builder().success(true);
+        return new Response<>(true);
     }
 
     @PostMapping(value = "api/register")
-    public Response.ResponseBuilder<Void> topicApiRegister(User user, @RequestBody TopicApiRegisterReq req) {
+    public Response<Void> topicApiRegister(User user, @RequestBody TopicApiRegisterReq req) {
         Topic topic = topicService.getTopicByUIdTopic(user.getId(), req.getTopic());
         if (topic == null) {
-            return Response.<Void>builder().success(false).errMsg("topic " + req.getTopic() + " not exists.");
+            return new Response<>(false, "topic " + req.getTopic() + " not exists.");
         }
         try {
             topicApiService.add(topic.getId(), req.getApi(), String.join(",", req.getParams()));
         } catch (TopicApiExistsException e) {
-            return Response.<Void>builder().success(true);
+            return new Response<>(true);
         }
-        return Response.<Void>builder().success(true);
+        return new Response<>(true);
     }
 }

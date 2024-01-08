@@ -45,12 +45,12 @@ public class TerminalController {
     private final Logger logger = LoggerFactory.getLogger(TerminalController.class);
 
     @PostMapping(value = "call")
-    public Response.ResponseBuilder<Message> call(User user, @RequestBody TerminalCmdReq req) {
+    public Response<Message> call(User user, @RequestBody TerminalCmdReq req) {
         Topic tTopic = topicService.getTopicByUIdTopic(user.getId(), req.getTopic());
         Topic uTopic = topicService.getUserTopicByUId(user.getId());
         TopicApi tTopicApi = topicApiService.getByTidApiParams(tTopic.getId(), req.getApi(), req.getParams());
         if (tTopicApi == null) {
-            return Response.<Message>builder().success(false).errMsg(
+            return new Response<>(false,
                     "topic " + req.getTopic() + " has no api named " + req.getApi());
         }
 
@@ -59,15 +59,14 @@ public class TerminalController {
             client = new MClient(brokerHost, uTopic.getTopic(), mqttAccount, mqttPassword, persistenceDir);
         } catch (MqttServerConnectException e) {
             logger.error("init client error: ", e);
-            return Response.<Message>builder().success(false).errMsg("init client error: " + e.getMessage());
+            return new Response<>(false, "init client error: " + e.getMessage());
         }
         try {
-            return Response.<Message>builder().success(true).data(
-                    client.call(tTopic.getTopic(), tTopicApi.getApi(),
-                            Arrays.asList(tTopicApi.getParams().split(","))));
+            return new Response<>(true, client.call(tTopic.getTopic(), tTopicApi.getApi(),
+                    Arrays.asList(tTopicApi.getParams().split(","))));
         } catch (MWaitResonseException e) {
             logger.error("call terminal error: ", e);
-            return Response.<Message>builder().success(false).errMsg("call terminal error: " + e.getMessage());
+            return new Response<>(false, "call terminal error: " + e.getMessage());
         }
     }
 }

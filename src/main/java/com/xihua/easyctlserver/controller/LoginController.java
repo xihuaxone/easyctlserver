@@ -35,17 +35,17 @@ public class LoginController {
     public Response<Void> login(HttpServletRequest request, HttpServletResponse response, @RequestBody LoginReq req) {
         UserAuth userAuth = userAuthService.get(req.getLoginAccount());
         if (userAuth == null) {
-            return Response.<Void>builder().success(false).errMsg("user auth not exists.").build();
+            return new Response<>(false, "user auth not exists.");
         }
         if (!userAuth.getLoginPassword().equals(req.getPassword())) {
-            return Response.<Void>builder().success(false).errMsg("login failed.").build();
+            return new Response<>(false, "login failed.");
         }
 
         HashMap<String, String> map = new HashMap<>();
         map.put("uid", String.valueOf(userAuth.getuId()));
         String token = JWTUtil.generateToken(map, secret, 24 * 7);
         response.addCookie(new Cookie("TOKEN", token));
-        return Response.<Void>builder().success(true).build();
+        return new Response<>(true);
     }
 
     @PostMapping(value = "register")
@@ -54,14 +54,14 @@ public class LoginController {
         try {
             user = userService.add(req.getNickName());
         } catch (UserExistsException e) {
-            return Response.<Void>builder().success(false).errMsg("user " + req.getNickName() + " exists.").build();
+            return new Response<>(false, "user " + req.getNickName() + " exists.");
         }
 
         try {
             userAuthService.add(user.getId(), req.getLoginAccount(), req.getPassword());
         } catch (UserAuthExistsException e) {
-            return Response.<Void>builder().success(false).errMsg("user account" + req.getLoginAccount() + " exists.").build();
+            return new Response<>(false, "user account" + req.getLoginAccount() + " exists.");
         }
-        return Response.<Void>builder().success(true).build();
+        return new Response<>(true);
     }
 }
