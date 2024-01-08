@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <script src="index.js"></script>
+    <script src="jQuery.js"></script>
 </head>
 <body>
 <span>welcome to easyctl</span><br><br><br>
-<form action="http://localhost:8080/auth/login" method="get">
+<form>
     <div name="loginReq">
-    First name: <label><input type="text" name="username"></label><br><br>
-    Last name: <label><input type="text" name="password"></label><br><br>
+    First name: <label><input type="text" id="loginAccount"></label><br><br>
+    Last name: <label><input type="text" id="password"></label><br><br>
     </div>
-    <input type="submit" value="提交">
+    <input type="submit" onclick="userLogin()" value="提交">
 </form>
 </body>
 </html>
