@@ -23,6 +23,12 @@ public class TopicApiService {
         return topicApiMapper.selectByPrimaryKey(topicApiId);
     }
 
+    public List<TopicApi> getByTid(Long tid) {
+        TopicApiExample example = new TopicApiExample();
+        example.createCriteria().andTidEqualTo(tid);
+        return topicApiMapper.selectByExample(example);
+    }
+
     public List<TopicApi> getByTidApi(Long tid, String api) {
         TopicApiExample example = new TopicApiExample();
         example.createCriteria().andTidEqualTo(tid).andApiEqualTo(api);

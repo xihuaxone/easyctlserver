@@ -61,20 +61,15 @@ public class UserAuthAop {
     }
 
     public User verify(HttpServletRequest request) {
-        String token = null;
-        if (request.getCookies() == null) {
+        if (request.getHeader("authorization") == null) {
             throw new UserAuthAopException("user not login.");
         }
-        for (Cookie c : request.getCookies()) {
-            if (c.getName().equals("TOKEN")) {
-                token = c.getValue();
-                break;
-            }
-        }
+        String token = request.getHeader("authorization");
+
         if (StringUtils.isBlank(token)) {
             throw new UserAuthAopException("user not login.");
         }
-
+        token = token.replace("Bearer", "").trim();
         try {
             JWTUtil.verify(token, secret);
         } catch (Throwable e) {

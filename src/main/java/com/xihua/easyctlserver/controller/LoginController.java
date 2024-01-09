@@ -45,6 +45,7 @@ public class LoginController {
         map.put("uid", String.valueOf(userAuth.getuId()));
         String token = JWTUtil.generateToken(map, secret, 24 * 7);
         response.addCookie(new Cookie("TOKEN", token));
+        response.setHeader("Authorization", "Bearer " + token);
         return new Response<>(true);
     }
 

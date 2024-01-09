@@ -1,25 +1,28 @@
 function userLogin() {
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST", "http://127.0.0.1:8080/auth/login", true);
-    xhr.setRequestHeader("Content-Type", "application/json");
-    xhr.onload = function() {
-        if (xhr.status === 200) {
-            console.log(xhr.responseText);
-            alert(xhr.responseText);
-        } else {
-            console.error('Error: ' + xhr.status);
-            alert(xhr.status);
-        }
-    };
-    xhr.onerror = function(e) {
-        console.error('Error: ' + e);
-        alert(xhr.status);
-    };
     var loginAccount = document.getElementById('loginAccount').value;
     var password = document.getElementById('password').value;
     data = {
         "loginAccount": loginAccount,
         "password": password
     }
-    xhr.send(JSON.stringify(data));
+
+    axiosClient({
+      method: 'post',
+      url: '/auth/login',
+      data: data,
+      withCredentials: true
+    }).then(response => {
+      console.log(response.data);
+      if (!response.data.success) {
+        document.getElementById('errMsg').innerHTML=response.data.errMsg;
+        return;
+      }
+      if (response.headers.authorization) {
+        localStorage.setItem('Authorization', response.headers.authorization);
+        window.location.href="terminalControl.html";
+      }
+    }).catch (function (e) {
+      console.log(e);
+      document.getElementById('errMsg').innerHTML="未知异常：" + e.message;
+    });
 }

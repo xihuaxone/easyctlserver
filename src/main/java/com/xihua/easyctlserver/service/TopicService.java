@@ -80,14 +80,14 @@ public class TopicService {
         }
         Topic record = new Topic();
         record.setTopic(topic);
-        record.setStatus(status);
+        record.setStat(status);
         topicMapper.insert(record);
     }
 
     public void add(Long uid, Topic uTopic, List<Topic> tTopicList) throws TopicExistsException {
-        addTopic(uTopic.getTopic(), uTopic.getStatus());
+        addTopic(uTopic.getTopic(), uTopic.getStat());
         for (Topic topic : tTopicList) {
-            addTopic(topic.getTopic(), topic.getStatus());
+            addTopic(topic.getTopic(), topic.getStat());
         }
 
         for (Topic tTopic : tTopicList) {
@@ -104,13 +104,13 @@ public class TopicService {
         }
     }
 
-    public boolean update(Long tid, int status) throws TopicNotExistsException {
+    public boolean update(Long tid, int state) throws TopicNotExistsException {
         if (get(tid) != null) {
             throw new TopicNotExistsException("topic " + tid + " not exists.");
         }
         Topic newTopic = new Topic();
         newTopic.setId(tid);
-        newTopic.setStatus(status);
+        newTopic.setStat(state);
         return topicMapper.updateByPrimaryKeySelective(newTopic) > 0;
     }
 
