@@ -13,4 +13,6 @@ public class TopicApiRegisterReq {
     private String api;
 
     private List<String> params;
+
+    private String actionName;
 }

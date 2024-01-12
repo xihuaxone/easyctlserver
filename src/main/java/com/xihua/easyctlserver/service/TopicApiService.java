@@ -45,7 +45,7 @@ public class TopicApiService {
         return topicApis.get(0);
     }
 
-    public void add(Long tid, String api, String params) throws TopicApiExistsException {
+    public void add(Long tid, String api, String params, String actionName) throws TopicApiExistsException {
         if (getByTidApiParams(tid, api, params) != null) {
             throw new TopicApiExistsException("tid=" + tid + " api=" + api
                     + " params=" + params + " already exists.");
@@ -54,6 +54,7 @@ public class TopicApiService {
         topicApi.setTid(tid);
         topicApi.setApi(api);
         topicApi.setParams(params);
+        topicApi.setActionName(actionName);
         topicApiMapper.insert(topicApi);
     }
 

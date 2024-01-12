@@ -55,6 +55,7 @@ public class TopicController {
                 topicApiDTO.setTid(topic.getId());
                 topicApiDTO.setApi(api.getApi());
                 topicApiDTO.setParams(api.getParams());
+                topicApiDTO.setActionName(api.getActionName());
                 apiDTOList.add(topicApiDTO);
             }
             topicDTO.setTopicApiDTOList(apiDTOList);
@@ -102,7 +103,7 @@ public class TopicController {
             return new Response<>(false, "topic " + req.getTopic() + " not exists.");
         }
         try {
-            topicApiService.add(topic.getId(), req.getApi(), String.join(",", req.getParams()));
+            topicApiService.add(topic.getId(), req.getApi(), String.join(",", req.getParams()), req.getActionName());
         } catch (TopicApiExistsException e) {
             return new Response<>(true);
         }

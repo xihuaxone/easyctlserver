@@ -13,4 +13,6 @@ public class TopicApiDTO {
     private String api;
 
     private String params;
+
+    private String actionName;
 }
