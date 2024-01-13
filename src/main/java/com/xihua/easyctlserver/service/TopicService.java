@@ -74,6 +74,14 @@ public class TopicService {
         return collect.isEmpty() ? null : collect.get(0);
     }
 
+    public Topic getTopicByUIdTid(Long uid, Long tId) {
+        UserTopicRelationExample relationExample = new UserTopicRelationExample();
+        relationExample.createCriteria().andUIdEqualTo(uid).andTTidEqualTo(tId);
+        List<UserTopicRelation> relations = userTopicRelationMapper.selectByExample(relationExample);
+        List<Topic> collect = relations.stream().map(r -> get(r.gettTid())).collect(Collectors.toList());
+        return collect.isEmpty() ? null : collect.get(0);
+    }
+
     private void addTopic(String topic, int status) throws TopicExistsException {
         if (get(topic) != null) {
             throw new TopicExistsException("topic " + topic + " already exists.");

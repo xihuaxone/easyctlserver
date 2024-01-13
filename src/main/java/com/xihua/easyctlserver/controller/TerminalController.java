@@ -31,13 +31,13 @@ public class TerminalController {
     @Autowired
     private TopicApiService topicApiService;
 
-    @Value("easymqtt.brokerHost")
+    @Value("${easymqtt.brokerHost}")
     private String brokerHost;
 
-    @Value("easymqtt.brokerHost")
+    @Value("${easymqtt.mqttAccount}")
     private String mqttAccount;
 
-    @Value("easymqtt.brokerHost")
+    @Value("${easymqtt.mqttPassword}")
     private String mqttPassword;
 
     private static final String persistenceDir = Objects.requireNonNull(TerminalController.class.getResource("")).getPath();
@@ -46,13 +46,12 @@ public class TerminalController {
 
     @PostMapping(value = "call")
     public Response<Message> call(User user, @RequestBody TerminalCmdReq req) {
-        Topic tTopic = topicService.getTopicByUIdTopic(user.getId(), req.getTopic());
-        Topic uTopic = topicService.getUserTopicByUId(user.getId());
-        TopicApi tTopicApi = topicApiService.getByTidApiParams(tTopic.getId(), req.getApi(), req.getParams());
+        TopicApi tTopicApi = topicApiService.get(req.getTopicApiId());
         if (tTopicApi == null) {
-            return new Response<>(false,
-                    "topic " + req.getTopic() + " has no api named " + req.getApi());
+            return new Response<>(false, "topicApi not exists: " + req.getTopicApiId());
         }
+        Topic tTopic = topicService.getTopicByUIdTid(user.getId(), tTopicApi.getTid());
+        Topic uTopic = topicService.getUserTopicByUId(user.getId());
 
         MClient client;
         try {

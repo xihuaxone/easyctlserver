@@ -6,9 +6,5 @@ import lombok.Setter;
 @Getter
 @Setter
 public class TerminalCmdReq {
-    private String topic;
-
-    private String api;
-
-    private String params;
+    private Long topicApiId;
 }

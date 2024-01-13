@@ -12,6 +12,7 @@ import com.xihua.easyctlserver.service.UserService;
 import com.xihua.easyctlserver.utils.JWTUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.Cookie;
@@ -51,18 +52,14 @@ public class LoginController {
 
     @PostMapping(value = "register")
     public Response<Void> register(@RequestBody RegisterReq req) {
-        User user;
         try {
-            user = userService.add(req.getNickName());
+            userService.register(req);
         } catch (UserExistsException e) {
             return new Response<>(false, "user " + req.getNickName() + " exists.");
-        }
-
-        try {
-            userAuthService.add(user.getId(), req.getLoginAccount(), req.getPassword());
         } catch (UserAuthExistsException e) {
             return new Response<>(false, "user account" + req.getLoginAccount() + " exists.");
         }
+
         return new Response<>(true);
     }
 }
