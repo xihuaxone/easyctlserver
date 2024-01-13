@@ -12,7 +12,7 @@ public class TopicApiExample {
     protected List<Criteria> oredCriteria;
 
     public TopicApiExample() {
-        oredCriteria = new ArrayList<>();
+        oredCriteria = new ArrayList<Criteria>();
     }
 
     public void setOrderByClause(String orderByClause) {
@@ -69,7 +69,7 @@ public class TopicApiExample {
 
         protected GeneratedCriteria() {
             super();
-            criteria = new ArrayList<>();
+            criteria = new ArrayList<Criterion>();
         }
 
         public boolean isValid() {
@@ -557,6 +557,7 @@ public class TopicApiExample {
     }
 
     public static class Criteria extends GeneratedCriteria {
+
         protected Criteria() {
             super();
         }

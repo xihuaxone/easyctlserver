@@ -12,7 +12,7 @@ public class UserExample {
     protected List<Criteria> oredCriteria;
 
     public UserExample() {
-        oredCriteria = new ArrayList<>();
+        oredCriteria = new ArrayList<Criteria>();
     }
 
     public void setOrderByClause(String orderByClause) {
@@ -69,7 +69,7 @@ public class UserExample {
 
         protected GeneratedCriteria() {
             super();
-            criteria = new ArrayList<>();
+            criteria = new ArrayList<Criterion>();
         }
 
         public boolean isValid() {
@@ -357,6 +357,7 @@ public class UserExample {
     }
 
     public static class Criteria extends GeneratedCriteria {
+
         protected Criteria() {
             super();
         }
