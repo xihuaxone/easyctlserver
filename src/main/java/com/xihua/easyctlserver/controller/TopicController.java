@@ -13,6 +13,7 @@ import com.xihua.easyctlserver.domain.dto.TopicDTO;
 import com.xihua.easyctlserver.exception.TopicApiExistsException;
 import com.xihua.easyctlserver.exception.TopicExistsException;
 import com.xihua.easyctlserver.exception.TopicNotExistsException;
+import com.xihua.easyctlserver.exception.UserTopicRelationExistsException;
 import com.xihua.easyctlserver.service.TopicApiService;
 import com.xihua.easyctlserver.service.TopicService;
 import org.slf4j.Logger;
@@ -65,15 +66,15 @@ public class TopicController {
     }
 
     @PostMapping(value = "register")
-    public Response<Void> control(User user, @RequestBody TopicRegisterReq req) {
-        Topic uTopic = new Topic();
-        uTopic.setTopic(req.getUTopic());
-        Topic tTopic = new Topic();
-        tTopic.setTopic(req.getTTopic());
+    public Response<Void> topicApiRegister(User user, @RequestBody TopicApiRegisterReq req) {
         try {
-            topicService.add(user.getId(), uTopic, Collections.singletonList(tTopic));
+            topicService.register(user, Collections.singletonList(req));
         } catch (TopicExistsException e) {
-            return new Response<>(false, "topic exists.");
+            return new Response<>(false, "topic " + req.getTopic() + " already exists.");
+        } catch (TopicApiExistsException e) {
+            return new Response<>(false, "topic api " + req.getApi() + " already exists.");
+        } catch (UserTopicRelationExistsException e) {
+            return new Response<>(false, "topic relation " + req.getApi() + " already exists.");
         }
         return new Response<>(true);
     }
@@ -93,20 +94,6 @@ public class TopicController {
     public Response<Void> delete(User user, @RequestBody String topic) {
         Topic oldTopic = topicService.getTopicByUIdTopic(user.getId(), topic);
         topicService.delete(oldTopic.getId());
-        return new Response<>(true);
-    }
-
-    @PostMapping(value = "api/register")
-    public Response<Void> topicApiRegister(User user, @RequestBody TopicApiRegisterReq req) {
-        Topic topic = topicService.getTopicByUIdTopic(user.getId(), req.getTopic());
-        if (topic == null) {
-            return new Response<>(false, "topic " + req.getTopic() + " not exists.");
-        }
-        try {
-            topicApiService.add(topic.getId(), req.getApi(), String.join(",", req.getParams()), req.getActionName());
-        } catch (TopicApiExistsException e) {
-            return new Response<>(true);
-        }
         return new Response<>(true);
     }
 }

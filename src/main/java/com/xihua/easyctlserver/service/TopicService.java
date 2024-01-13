@@ -1,12 +1,16 @@
 package com.xihua.easyctlserver.service;
 
+import com.alibaba.fastjson.JSON;
 import com.xihua.easyctlserver.dao.mapper.TopicMapper;
 import com.xihua.easyctlserver.dao.mapper.UserMapper;
 import com.xihua.easyctlserver.dao.mapper.UserTopicRelationMapper;
 import com.xihua.easyctlserver.dao.model.*;
+import com.xihua.easyctlserver.domain.TopicApiRegisterReq;
+import com.xihua.easyctlserver.enums.TopicStatEnum;
 import com.xihua.easyctlserver.exception.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,26 +23,19 @@ public class TopicService {
     private TopicMapper topicMapper;
 
     @Autowired
-    private UserTopicRelationMapper userTopicRelationMapper;
+    private TopicApiService topicApiService;
+
+    @Autowired
+    private TopicRelationService topicRelationService;
 
     public Topic get(Long tid) {
         return topicMapper.selectByPrimaryKey(tid);
     }
 
-    public Topic get(String topic) {
-        TopicExample example = new TopicExample();
-        example.createCriteria().andTopicEqualTo(topic);
-        List<Topic> topics = topicMapper.selectByExample(example);
-        if (topics.isEmpty()) {
-            return null;
-        }
-        return topics.get(0);
-    }
-
     public Topic getUserTopicByUId(Long uid) {
         UserTopicRelationExample relationExample = new UserTopicRelationExample();
         relationExample.createCriteria().andUIdEqualTo(uid);
-        List<UserTopicRelation> relations = userTopicRelationMapper.selectByExample(relationExample);
+        List<UserTopicRelation> relations = topicRelationService.get(uid);
         for (UserTopicRelation relation : relations) {
             return get(relation.getuTid());
         }
@@ -46,9 +43,7 @@ public class TopicService {
     }
 
     public List<Topic> getTTopicsByUId(Long uid) {
-        UserTopicRelationExample relationExample = new UserTopicRelationExample();
-        relationExample.createCriteria().andUIdEqualTo(uid);
-        List<UserTopicRelation> relations = userTopicRelationMapper.selectByExample(relationExample);
+        List<UserTopicRelation> relations = topicRelationService.get(uid);
         return relations.stream().map(r -> get(r.gettTid())).collect(Collectors.toList());
     }
 
@@ -67,23 +62,19 @@ public class TopicService {
         if (topicInfo == null) {
             return null;
         }
-        UserTopicRelationExample relationExample = new UserTopicRelationExample();
-        relationExample.createCriteria().andUIdEqualTo(uid).andTTidEqualTo(topicInfo.getId());
-        List<UserTopicRelation> relations = userTopicRelationMapper.selectByExample(relationExample);
+        List<UserTopicRelation> relations = topicRelationService.getByUidTTid(uid, topicInfo.getId());
         List<Topic> collect = relations.stream().map(r -> get(r.gettTid())).collect(Collectors.toList());
         return collect.isEmpty() ? null : collect.get(0);
     }
 
     public Topic getTopicByUIdTid(Long uid, Long tId) {
-        UserTopicRelationExample relationExample = new UserTopicRelationExample();
-        relationExample.createCriteria().andUIdEqualTo(uid).andTTidEqualTo(tId);
-        List<UserTopicRelation> relations = userTopicRelationMapper.selectByExample(relationExample);
+        List<UserTopicRelation> relations = topicRelationService.getByUidTTid(uid, tId);
         List<Topic> collect = relations.stream().map(r -> get(r.gettTid())).collect(Collectors.toList());
         return collect.isEmpty() ? null : collect.get(0);
     }
 
     private void addTopic(String topic, int status) throws TopicExistsException {
-        if (get(topic) != null) {
+        if (getByTopic(topic) != null) {
             throw new TopicExistsException("topic " + topic + " already exists.");
         }
         Topic record = new Topic();
@@ -92,23 +83,17 @@ public class TopicService {
         topicMapper.insert(record);
     }
 
-    public void add(Long uid, Topic uTopic, List<Topic> tTopicList) throws TopicExistsException {
+    public void add(Long uid, Topic uTopic, List<Topic> tTopicList) throws TopicExistsException, UserTopicRelationExistsException {
         addTopic(uTopic.getTopic(), uTopic.getStat());
         for (Topic topic : tTopicList) {
             addTopic(topic.getTopic(), topic.getStat());
         }
 
         for (Topic tTopic : tTopicList) {
-            UserTopicRelationExample relationExample = new UserTopicRelationExample();
-            relationExample.createCriteria().andUIdEqualTo(uid).andUTidEqualTo(uTopic.getId()).andTTidEqualTo(tTopic.getId());
-            if (userTopicRelationMapper.countByExample(relationExample) > 0) {
+            if (topicRelationService.getByUidUTidTTid(uid, uTopic.getId(), tTopic.getId()) != null) {
                 return;
             }
-            UserTopicRelation record = new UserTopicRelation();
-            record.setuId(uid);
-            record.setuTid(uTopic.getId());
-            record.settTid(tTopic.getId());
-            userTopicRelationMapper.insert(record);
+            topicRelationService.add(uid, uTopic.getId(), tTopic.getId());
         }
     }
 
@@ -128,15 +113,34 @@ public class TopicService {
 
     public boolean deleteAll(Long uid) {
         // 查询relation，获取所有topic
-        UserTopicRelationExample example = new UserTopicRelationExample();
-        example.createCriteria().andUIdEqualTo(uid);
-        List<UserTopicRelation> relations = userTopicRelationMapper.selectByExample(example);
-        boolean hasError = false;
+        List<UserTopicRelation> relations = topicRelationService.get(uid);
         for (UserTopicRelation relation : relations) {
             delete(relation.getuTid());
             delete(relation.gettTid());
-            userTopicRelationMapper.deleteByPrimaryKey(relation.getId());
+            topicRelationService.delete(relation.getId());
         }
         return true;
+    }
+
+    @Transactional(rollbackFor = Throwable.class)
+    public <T> void register(User user, List<TopicApiRegisterReq> tTopicList) throws TopicExistsException, TopicApiExistsException, UserTopicRelationExistsException {
+        Topic uTopic = getUserTopicByUId(user.getId());
+        if (uTopic == null) {
+            addTopic(generateUTopic(user.getId()), TopicStatEnum.OFFLINE.getCode());
+            uTopic = getUserTopicByUId(user.getId());
+        }
+        for (TopicApiRegisterReq tTopic : tTopicList) {
+            addTopic(tTopic.getTopic(), TopicStatEnum.OFFLINE.getCode());
+            Topic tTopicPO = getByTopic(tTopic.getTopic());
+            if (tTopicPO == null) {
+                throw new RuntimeException("topic add failed: " + JSON.toJSONString(tTopic));
+            }
+            topicApiService.add(tTopicPO.getId(), tTopic.getApi(), tTopic.getParams(), tTopic.getActionName());
+            topicRelationService.add(user.getId(), uTopic.getId(), tTopicPO.getId());
+        }
+    }
+
+    private String generateUTopic(Long uid) {
+        return "usr/" + uid;
     }
 }
