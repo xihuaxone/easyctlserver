@@ -127,7 +127,7 @@ public class TopicService {
         Topic uTopic = getUserTopicByUId(user.getId());
         if (uTopic == null) {
             addTopic(generateUTopic(user.getId()), TopicStatEnum.OFFLINE.getCode());
-            uTopic = getUserTopicByUId(user.getId());
+            uTopic = getByTopic(generateUTopic(user.getId()));
         }
         for (TopicApiRegisterReq tTopic : tTopicList) {
             addTopic(tTopic.getTopic(), TopicStatEnum.OFFLINE.getCode());
@@ -141,6 +141,6 @@ public class TopicService {
     }
 
     private String generateUTopic(Long uid) {
-        return "usr/" + uid;
+        return "/usr/" + uid;
     }
 }
