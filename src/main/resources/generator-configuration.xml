@@ -7,7 +7,7 @@
         <property name="autoDelimitKeywords" value="true"/>
         <commentGenerator>
             <property name="suppressDate" value="false"/>
-            <property name="suppressAllComments" value="false"/>
+            <property name="suppressAllComments" value="true"/>
         </commentGenerator>
 
         <!--数据库链接地址账号密码-->
