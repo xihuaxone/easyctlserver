@@ -126,11 +126,11 @@ public class TopicService {
     public <T> void register(User user, List<TopicApiRegisterReq> tTopicList) throws TopicExistsException, TopicApiExistsException, UserTopicRelationExistsException {
         Topic uTopic = getUserTopicByUId(user.getId());
         if (uTopic == null) {
-            addTopic(generateUTopic(user.getId()), TopicStatEnum.OFFLINE.getCode());
+            addTopic(generateUTopic(user.getId()), TopicStatEnum.ONLINE.getCode());
             uTopic = getByTopic(generateUTopic(user.getId()));
         }
         for (TopicApiRegisterReq tTopic : tTopicList) {
-            addTopic(tTopic.getTopic(), TopicStatEnum.OFFLINE.getCode());
+            addTopic(tTopic.getTopic(), TopicStatEnum.ONLINE.getCode());
             Topic tTopicPO = getByTopic(tTopic.getTopic());
             if (tTopicPO == null) {
                 throw new RuntimeException("topic add failed: " + JSON.toJSONString(tTopic));
