@@ -6,6 +6,8 @@ import com.xihua.easyctlserver.dao.model.TopicApi;
 import com.xihua.easyctlserver.dao.model.User;
 import com.xihua.easyctlserver.domain.Response;
 import com.xihua.easyctlserver.domain.TerminalCmdReq;
+import com.xihua.easyctlserver.domain.TopicApiRegisterReq;
+import com.xihua.easyctlserver.exception.TopicApiExistsException;
 import com.xihua.easyctlserver.service.TopicApiService;
 import com.xihua.easyctlserver.service.TopicService;
 import com.xihua.easymqtt.MClient;
@@ -19,7 +21,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @UserAuth(paramsWithUser = true)
 @RestController
@@ -43,6 +47,21 @@ public class TerminalController {
     private static final String persistenceDir = Objects.requireNonNull(TerminalController.class.getResource("")).getPath();
 
     private final Logger logger = LoggerFactory.getLogger(TerminalController.class);
+
+    @PostMapping(value = "addAction")
+    public Response<Boolean> addTopicApi(User user, @RequestBody TopicApiRegisterReq req) {
+        List<Topic> ownedTTopics = topicService.getTTopicsByUId(user.getId());
+        Optional<Topic> owned = ownedTTopics.stream().filter(t -> t.getTopic().equals(req.getTopic())).findAny();
+        if (! owned.isPresent()) {
+            return new Response<>(false, "user not own this topic.");
+        }
+        try {
+            topicApiService.add(owned.get().getId(), req.getApi(), req.getParams(), req.getActionName());
+        } catch (TopicApiExistsException e) {
+            return new Response<>(false, "action already exists.");
+        }
+        return new Response<>(true);
+    }
 
     @PostMapping(value = "call")
     public Response<Message> call(User user, @RequestBody TerminalCmdReq req) {
