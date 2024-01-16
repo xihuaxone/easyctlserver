@@ -4,10 +4,7 @@ import com.xihua.easyctlserver.annotations.UserAuth;
 import com.xihua.easyctlserver.dao.model.Topic;
 import com.xihua.easyctlserver.dao.model.TopicApi;
 import com.xihua.easyctlserver.dao.model.User;
-import com.xihua.easyctlserver.domain.Response;
-import com.xihua.easyctlserver.domain.TopicApiRegisterReq;
-import com.xihua.easyctlserver.domain.TopicRegisterReq;
-import com.xihua.easyctlserver.domain.TopicUpdateReq;
+import com.xihua.easyctlserver.domain.*;
 import com.xihua.easyctlserver.domain.dto.TopicApiDTO;
 import com.xihua.easyctlserver.domain.dto.TopicDTO;
 import com.xihua.easyctlserver.exception.TopicApiExistsException;
@@ -74,7 +71,21 @@ public class TopicController {
         } catch (TopicApiExistsException e) {
             return new Response<>(false, "topic api " + req.getApi() + " already exists.");
         } catch (UserTopicRelationExistsException e) {
-            return new Response<>(false, "topic relation " + req.getApi() + " already exists.");
+            return new Response<>(false, "topic relation already exists.");
+        }
+        return new Response<>(true);
+    }
+
+    @PostMapping(value = "userShare")
+    public Response<Void> userShare(User user, @RequestBody TopicShareReq req) {
+        try {
+            topicService.userShareTopic(user, Collections.singletonList(req));
+        } catch (TopicExistsException e) {
+            return new Response<>(false, "topic " + req.getTopic() + " already exists.");
+        } catch (UserTopicRelationExistsException e) {
+            return new Response<>(false, "topic relation already exists.");
+        } catch (TopicNotExistsException e) {
+            return new Response<>(false, "topic " + req.getTopic() + " not exists.");
         }
         return new Response<>(true);
     }

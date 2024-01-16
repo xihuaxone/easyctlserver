@@ -6,6 +6,7 @@ import com.xihua.easyctlserver.dao.mapper.UserMapper;
 import com.xihua.easyctlserver.dao.mapper.UserTopicRelationMapper;
 import com.xihua.easyctlserver.dao.model.*;
 import com.xihua.easyctlserver.domain.TopicApiRegisterReq;
+import com.xihua.easyctlserver.domain.TopicShareReq;
 import com.xihua.easyctlserver.enums.TopicStatEnum;
 import com.xihua.easyctlserver.exception.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -136,6 +137,22 @@ public class TopicService {
                 throw new RuntimeException("topic add failed: " + JSON.toJSONString(tTopic));
             }
             topicApiService.add(tTopicPO.getId(), tTopic.getApi(), tTopic.getParams(), tTopic.getActionName());
+            topicRelationService.add(user.getId(), uTopic.getId(), tTopicPO.getId());
+        }
+    }
+
+    @Transactional(rollbackFor = Throwable.class)
+    public <T> void userShareTopic(User user, List<TopicShareReq> tTopicList) throws TopicNotExistsException, UserTopicRelationExistsException, TopicExistsException {
+        Topic uTopic = getUserTopicByUId(user.getId());
+        if (uTopic == null) {
+            addTopic(generateUTopic(user.getId()), TopicStatEnum.ONLINE.getCode());
+            uTopic = getByTopic(generateUTopic(user.getId()));
+        }
+        for (TopicShareReq tTopic : tTopicList) {
+            Topic tTopicPO = getByTopic(tTopic.getTopic());
+            if (tTopicPO == null) {
+                throw new TopicNotExistsException("topic add failed: " + JSON.toJSONString(tTopic));
+            }
             topicRelationService.add(user.getId(), uTopic.getId(), tTopicPO.getId());
         }
     }
