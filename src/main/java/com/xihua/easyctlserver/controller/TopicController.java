@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @UserAuth(paramsWithUser = true)
 @RestController
@@ -76,16 +77,31 @@ public class TopicController {
         return new Response<>(true);
     }
 
-    @PostMapping(value = "userShare")
-    public Response<Void> userShare(User user, @RequestBody TopicShareReq req) {
+    @PostMapping(value = "applyExistsTopic")
+    public Response<Void> applyExistsTopic(User user, @RequestBody TopicShareReq req) {
         try {
-            topicService.userShareTopic(user, Collections.singletonList(req));
+            topicService.applyExistsTopic(user, Collections.singletonList(req));
         } catch (TopicExistsException e) {
             return new Response<>(false, "topic " + req.getTopic() + " already exists.");
         } catch (UserTopicRelationExistsException e) {
             return new Response<>(false, "topic relation already exists.");
         } catch (TopicNotExistsException e) {
             return new Response<>(false, "topic " + req.getTopic() + " not exists.");
+        }
+        return new Response<>(true);
+    }
+
+    @PostMapping(value = "addAction")
+    public Response<Boolean> addTopicApi(User user, @RequestBody TopicApiRegisterReq req) {
+        List<Topic> ownedTTopics = topicService.getTTopicsByUId(user.getId());
+        Optional<Topic> owned = ownedTTopics.stream().filter(t -> t.getTopic().equals(req.getTopic())).findAny();
+        if (! owned.isPresent()) {
+            return new Response<>(false, "user not own this topic.");
+        }
+        try {
+            topicApiService.add(owned.get().getId(), req.getApi(), req.getParams(), req.getActionName());
+        } catch (TopicApiExistsException e) {
+            return new Response<>(false, "action already exists.");
         }
         return new Response<>(true);
     }

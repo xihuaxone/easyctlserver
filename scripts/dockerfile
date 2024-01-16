@@ -1,0 +1,21 @@
+FROM openjdk:8
+
+WORKDIR /opt
+
+COPY . .
+
+EXPOSE 8080
+
+USER root
+
+CMD [ "java", "-jar", "/opt/easyctl-server.jar" ]
+
+# docker build -f dockerfile -t mqttserver:v1.2.0 .
+
+# docker save -o ./mqttserver-v1.2.0.tar mqttserver:v1.2.0
+
+# docker load -i ./mqttserver-v1.2.0.tar
+
+# docker run -it -p 8080:8080 mqttserver:v1.2.0 /bin/bash
+
+# docker run -d -p 8080:8080 mqttserver:v1.2.0

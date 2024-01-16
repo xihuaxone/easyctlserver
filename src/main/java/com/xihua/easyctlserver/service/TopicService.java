@@ -142,7 +142,7 @@ public class TopicService {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public <T> void userShareTopic(User user, List<TopicShareReq> tTopicList) throws TopicNotExistsException, UserTopicRelationExistsException, TopicExistsException {
+    public <T> void applyExistsTopic(User user, List<TopicShareReq> tTopicList) throws TopicNotExistsException, UserTopicRelationExistsException, TopicExistsException {
         Topic uTopic = getUserTopicByUId(user.getId());
         if (uTopic == null) {
             addTopic(generateUTopic(user.getId()), TopicStatEnum.ONLINE.getCode());
