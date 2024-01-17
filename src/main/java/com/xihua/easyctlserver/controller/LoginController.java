@@ -50,6 +50,15 @@ public class LoginController {
         return new Response<>(true);
     }
 
+    @com.xihua.easyctlserver.annotations.UserAuth(paramsWithUser = true)
+    @PostMapping(value = "verify")
+    public Response<Void> login(User user) {
+        if (user != null) {
+            return new Response<>(true);
+        }
+        return new Response<>(false);
+    }
+
     @PostMapping(value = "register")
     public Response<Void> register(@RequestBody RegisterReq req) {
         try {
