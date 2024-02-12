@@ -6,6 +6,12 @@ import lombok.Setter;
 @Getter
 @Setter
 public class TopicUpdateReq {
-    private String topic;
+
+    private Long topicApiId;
+
+    private String api;
+
+    private String params;
+
     private int status;
 }

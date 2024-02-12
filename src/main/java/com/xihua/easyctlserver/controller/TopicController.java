@@ -95,7 +95,7 @@ public class TopicController {
     public Response<Boolean> addTopicApi(User user, @RequestBody TopicApiRegisterReq req) {
         List<Topic> ownedTTopics = topicService.getTTopicsByUId(user.getId());
         Optional<Topic> owned = ownedTTopics.stream().filter(t -> t.getTopic().equals(req.getTopic())).findAny();
-        if (! owned.isPresent()) {
+        if (! checkPermission(user, req.getTopic())) {
             return new Response<>(false, "user not own this topic.");
         }
         try {
@@ -108,12 +108,12 @@ public class TopicController {
 
     @PostMapping(value = "update")
     public Response<Void> update(User user, @RequestBody TopicUpdateReq req) {
-        Topic oldTopic = topicService.getTopicByUIdTopic(user.getId(), req.getTopic());
-        try {
-            topicService.update(oldTopic.getId(), req.getStatus());
-        } catch (TopicNotExistsException e) {
-            return new Response<>(false, "topic " + req.getTopic() + " not exists.");
+        TopicApi topicApi = topicApiService.get(req.getTopicApiId());
+        Topic topic = topicService.get(topicApi.getTid());
+        if (! checkPermission(user, topic.getTopic())) {
+            return new Response<>(false, "user not own this topic.");
         }
+        topicService.update(topic.getId(), req);
         return new Response<>(true);
     }
 
@@ -122,5 +122,11 @@ public class TopicController {
         Topic oldTopic = topicService.getTopicByUIdTopic(user.getId(), topic);
         topicService.delete(oldTopic.getId());
         return new Response<>(true);
+    }
+
+    private boolean checkPermission(User user, String topic) {
+        List<Topic> ownedTTopics = topicService.getTTopicsByUId(user.getId());
+        Optional<Topic> owned = ownedTTopics.stream().filter(t -> t.getTopic().equals(topic)).findAny();
+        return owned.isPresent();
     }
 }

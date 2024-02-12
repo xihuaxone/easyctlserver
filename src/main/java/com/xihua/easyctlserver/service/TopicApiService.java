@@ -58,10 +58,11 @@ public class TopicApiService {
         topicApiMapper.insert(topicApi);
     }
 
-    public boolean update(Long topicApiId, String newParams) {
+    public boolean update(Long topicApiId, String newApi, String newParams) {
         TopicApi topicApi = new TopicApi();
         topicApi.setId(topicApiId);
         topicApi.setParams(newParams);
+        topicApi.setApi(newApi);
         return topicApiMapper.updateByPrimaryKeySelective(topicApi) > 0;
     }
 

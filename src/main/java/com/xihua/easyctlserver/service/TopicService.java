@@ -2,18 +2,16 @@ package com.xihua.easyctlserver.service;
 
 import com.alibaba.fastjson.JSON;
 import com.xihua.easyctlserver.dao.mapper.TopicMapper;
-import com.xihua.easyctlserver.dao.mapper.UserMapper;
-import com.xihua.easyctlserver.dao.mapper.UserTopicRelationMapper;
 import com.xihua.easyctlserver.dao.model.*;
 import com.xihua.easyctlserver.domain.TopicApiRegisterReq;
 import com.xihua.easyctlserver.domain.TopicShareReq;
+import com.xihua.easyctlserver.domain.TopicUpdateReq;
 import com.xihua.easyctlserver.enums.TopicStatEnum;
 import com.xihua.easyctlserver.exception.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -98,14 +96,22 @@ public class TopicService {
         }
     }
 
-    public boolean update(Long tid, int state) throws TopicNotExistsException {
-        if (get(tid) != null) {
-            throw new TopicNotExistsException("topic " + tid + " not exists.");
+    @Transactional(rollbackFor = Throwable.class)
+    public void update(Long tid, TopicUpdateReq updateReq) {
+        if (updateReq.getStatus() != 0) {
+            updateStatus(tid, TopicStatEnum.valueOf(updateReq.getStatus()));
+        }
+        topicApiService.update(updateReq.getTopicApiId(), updateReq.getApi(), updateReq.getParams());
+    }
+
+    public void updateStatus(Long tid, TopicStatEnum status) {
+        if (status == null) {
+            throw new RuntimeException("status illegal.");
         }
         Topic newTopic = new Topic();
         newTopic.setId(tid);
-        newTopic.setStat(state);
-        return topicMapper.updateByPrimaryKeySelective(newTopic) > 0;
+        newTopic.setStat(status.getCode());
+        topicMapper.updateByPrimaryKeySelective(newTopic);
     }
 
     public boolean delete(Long tid) {
